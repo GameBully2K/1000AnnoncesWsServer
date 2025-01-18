@@ -62,6 +62,6 @@ app.post('/broadcast', () => {
 });
 
 // Start the server
-app.listen(3000, () => {
+app.listen(9854, () => {
   console.log(`Server running on http://localhost:3000`);
 });
