@@ -35,33 +35,30 @@ const app = new Elysia()
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type"]
-  }));
-
-// WebSocket endpoint
-app.ws('/ws', {
-  open(ws) {
-    console.log('New WebSocket connection');
-    connections.add(ws);
-  },
-  message(ws, message) {
-    console.log('Received message:', message);
-  },
-  close(ws) {
-    console.log('WebSocket connection closed');
-    connections.delete(ws);
-  },
-});
-
-// HTTP endpoint to trigger a broadcast
-app.post('/broadcast', () => {
-  // Publish a "refresh" message to Redis
-  console.log('Broadcast started');
-  redisPublisher.publish('refresh', JSON.stringify({ type: 'refresh' }));
-  console.log('Broadcast completed');
-  return 'Broadcast triggered';
-});
-
-// Start the server
-app.listen(9854, () => {
-  console.log(`Server running on http://localhost:3000`);
-});
+  }))
+  .get('/', () => {
+    return 'Hello, world!';
+  })
+  .post('/broadcast', () => {
+    // Publish a "refresh" message to Redis
+    console.log('Broadcast started');
+    redisPublisher.publish('refresh', JSON.stringify({ type: 'refresh' }));
+    console.log('Broadcast completed');
+    return 'Broadcast triggered';
+  })
+  .ws('/ws', {
+    open(ws) {
+      console.log('New WebSocket connection');
+      connections.add(ws);
+    },
+    message(ws, message) {
+      console.log('Received message:', message);
+    },
+    close(ws) {
+      console.log('WebSocket connection closed');
+      connections.delete(ws);
+    },
+  })
+  .listen(9854, () => {
+    console.log(`Server running on http://localhost:3000`);
+  });
