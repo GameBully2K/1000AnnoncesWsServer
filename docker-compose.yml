@@ -3,21 +3,35 @@ version: '3.8'
 services:
   app:
     build: .
-    ports:
-      - "9854:9854"
+    networks:
+      - internal
+      - traefik-public
     environment:
       - REDIS_URL=redis://redis:6379
+      - NODE_ENV=production
     depends_on:
       - redis
-    expose:
-      - 9854
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wsserver.rule=Host(`your-domain.com`)"
+      - "traefik.http.services.wsserver.loadbalancer.server.port=9854"
+      - "traefik.docker.network=traefik-public"
 
   redis:
     image: redis:alpine
-    ports:
-      - "6379:6379"
+    networks:
+      - internal
     volumes:
       - redis_data:/data
+    # Remove exposed ports for security in production
+    # ports:
+    #   - "6379:6379"
+
+networks:
+  internal:
+    driver: bridge
+  traefik-public:
+    external: true
 
 volumes:
   redis_data:

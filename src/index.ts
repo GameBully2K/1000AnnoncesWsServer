@@ -4,13 +4,40 @@ import { ElysiaWS } from 'elysia/dist/ws';
 import { createClient } from 'redis';
 import { cors } from '@elysiajs/cors';
 
-// Create a Redis client
+const retryStrategy = {
+  retry_strategy: function(options) {
+    if (options.error && options.error.code === 'ECONNREFUSED') {
+      // End reconnecting on a specific error
+      console.error('Redis connection refused, retrying...');
+      return Math.min(options.attempt * 100, 3000);
+    }
+    if (options.total_retry_time > 1000 * 60 * 60) {
+      // End reconnecting after a specific timeout
+      return new Error('Retry time exhausted');
+    }
+    // reconnect after
+    return Math.min(options.attempt * 100, 3000);
+  }
+};
+
+// Create a Redis client with retry strategy
 const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
+  url: process.env.REDIS_URL || 'redis://localhost:6379',
+  socket: {
+    reconnectStrategy: retryStrategy
+  }
 });
+
 const redisPublisher = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
+  url: process.env.REDIS_URL || 'redis://localhost:6379',
+  socket: {
+    reconnectStrategy: retryStrategy
+  }
 });
+
+// Add error handlers
+redisClient.on('error', (err) => console.error('Redis Client Error:', err));
+redisPublisher.on('error', (err) => console.error('Redis Publisher Error:', err));
 
 // Store active WebSocket connections
 const connections = new Set<ElysiaWS>();
