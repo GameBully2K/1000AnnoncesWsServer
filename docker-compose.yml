@@ -9,6 +9,8 @@ services:
       - REDIS_URL=redis://redis:6379
     depends_on:
       - redis
+    expose:
+      - 9854
 
   redis:
     image: redis:alpine
